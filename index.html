@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SnapShare — Share Your World</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --purple: #7c3aed;
+    --purple-light: #a78bfa;
+    --purple-dim: rgba(124,58,237,0.15);
+    --bg: #0d0d12;
+    --bg2: #13131a;
+    --bg3: #1a1a24;
+    --border: rgba(255,255,255,0.08);
+    --border2: rgba(255,255,255,0.13);
+    --text: #f0eee8;
+    --muted: rgba(240,238,232,0.45);
+    --radius: 12px;
+    --radius-sm: 8px;
+  }
+
+  html { scroll-behavior: smooth; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+  /* ---- NAV ---- */
+  nav {
+    position: sticky; top: 0; z-index: 200;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 24px;
+    background: rgba(13,13,18,0.92);
+    backdrop-filter: blur(12px);
+    border-bottom: 0.5px solid var(--border);
+  }
+  .logo { font-size: 20px; font-weight: 700; letter-spacing: -0.5px; color: #fff; text-decoration: none; }
+  .logo span { color: var(--purple-light); }
+  .nav-right { display: flex; align-items: center; gap: 10px; }
+  .btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: var(--radius-sm); font-size: 13px; font-weight: 500; cursor: pointer; border: none; transition: all 0.15s; text-decoration: none; }
+  .btn-ghost { background: transparent; color: var(--muted); border: 0.5px solid var(--border2); }
+  .btn-ghost:hover { background: rgba(255,255,255,0.06); color: #fff; }
+  .btn-primary { background: var(--purple); color: #fff; }
+  .btn-primary:hover { background: #6d28d9; transform: translateY(-1px); }
+  .avatar-circle { width: 34px; height: 34px; border-radius: 50%; background: linear-gradient(135deg, #7c3aed, #a78bfa); display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; cursor: pointer; color: #fff; flex-shrink: 0; }
+
+  /* ---- HERO ---- */
+  .hero {
+    padding: 60px 24px 40px;
+    text-align: center;
+    background: radial-gradient(ellipse 80% 50% at 50% -10%, rgba(124,58,237,0.18) 0%, transparent 70%);
+  }
+  .hero h1 { font-size: clamp(28px, 6vw, 48px); font-weight: 700; letter-spacing: -1px; margin-bottom: 12px; }
+  .hero h1 em { font-style: normal; color: var(--purple-light); }
+  .hero p { font-size: 15px; color: var(--muted); max-width: 420px; margin: 0 auto 28px; line-height: 1.6; }
+  .hero-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+
+  /* ---- UPLOAD ZONE ---- */
+  .section { padding: 0 24px 32px; max-width: 1100px; margin: 0 auto; }
+  .section-label { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+  .section-label::after { content: ''; flex: 1; height: 0.5px; background: var(--border); }
+
+  .upload-zone {
+    border: 1.5px dashed rgba(167,139,250,0.3);
+    border-radius: 16px; padding: 36px 24px;
+    text-align: center; cursor: pointer;
+    transition: all 0.2s;
+    background: rgba(124,58,237,0.03);
+  }
+  .upload-zone:hover, .upload-zone.dragover { border-color: var(--purple-light); background: rgba(124,58,237,0.08); }
+  .upload-icon { font-size: 38px; color: var(--purple-light); margin-bottom: 10px; }
+  .upload-zone h3 { font-size: 15px; font-weight: 500; margin-bottom: 4px; }
+  .upload-zone p { font-size: 13px; color: var(--muted); margin-bottom: 16px; }
+  #fileInput { display: none; }
+
+  .progress-wrap { height: 3px; background: var(--border); border-radius: 2px; overflow: hidden; margin-top: 14px; display: none; }
+  .progress-fill { height: 100%; background: var(--purple-light); border-radius: 2px; width: 0%; transition: width 0.15s linear; }
+
+  /* ---- TABS ---- */
+  .tabs-row { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; padding: 0 24px; max-width: 1100px; margin: 0 auto 20px; }
+  .tabs { display: flex; gap: 4px; background: var(--bg2); border-radius: 10px; padding: 4px; border: 0.5px solid var(--border); }
+  .tab { padding: 7px 16px; border-radius: 7px; font-size: 13px; font-weight: 500; cursor: pointer; color: var(--muted); border: none; background: none; transition: all 0.15s; }
+  .tab.active { background: var(--bg3); color: var(--purple-light); border: 0.5px solid var(--border2); }
+  .tab:hover:not(.active) { color: var(--text); }
+  .view-toggle { display: flex; gap: 4px; }
+  .view-btn { width: 32px; height: 32px; border-radius: 7px; border: 0.5px solid var(--border2); background: transparent; color: var(--muted); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 16px; transition: all 0.15s; }
+  .view-btn.active { background: var(--bg3); color: var(--purple-light); }
+  .view-btn:hover:not(.active) { color: var(--text); }
+
+  /* ---- GALLERY ---- */
+  .gallery-wrap { padding: 0 24px 60px; max-width: 1100px; margin: 0 auto; }
+  .gallery { columns: 3; column-gap: 14px; }
+  .gallery.grid-view { columns: unset; display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; }
+  @media (max-width: 700px) { .gallery { columns: 2; } }
+  @media (max-width: 420px) { .gallery { columns: 1; } }
+
+  .photo-card { break-inside: avoid; margin-bottom: 14px; border-radius: var(--radius); overflow: hidden; position: relative; cursor: pointer; background: var(--bg3); border: 0.5px solid var(--border); transition: border-color 0.2s; }
+  .photo-card:hover { border-color: var(--border2); }
+  .grid-view .photo-card { margin-bottom: 0; }
+  .photo-card img { width: 100%; display: block; transition: transform 0.3s ease; }
+  .grid-view .photo-card img { height: 200px; object-fit: cover; }
+  .photo-card:hover img { transform: scale(1.04); }
+
+  .photo-overlay { position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.1) 45%, transparent 70%); opacity: 0; transition: opacity 0.2s; display: flex; flex-direction: column; justify-content: flex-end; padding: 12px; }
+  .photo-card:hover .photo-overlay { opacity: 1; }
+  .overlay-bottom { display: flex; align-items: center; justify-content: space-between; }
+  .photo-author { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 500; color: rgba(255,255,255,0.9); }
+  .mini-av { width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 700; color: #fff; flex-shrink: 0; }
+  .photo-btns { display: flex; gap: 6px; }
+  .icon-btn { background: rgba(255,255,255,0.15); backdrop-filter: blur(4px); border: none; border-radius: 6px; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #fff; font-size: 14px; transition: background 0.15s; }
+  .icon-btn:hover { background: rgba(255,255,255,0.3); }
+  .icon-btn.liked { color: #f87171; }
+
+  .badge-new { position: absolute; top: 10px; left: 10px; background: var(--purple); color: #fff; font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 20px; letter-spacing: 0.04em; }
+
+  .empty-state { text-align: center; padding: 60px 24px; color: var(--muted); }
+  .empty-state i { font-size: 44px; display: block; margin-bottom: 12px; }
+  .empty-state p { font-size: 14px; }
+
+  /* ---- LIGHTBOX ---- */
+  .lightbox { display: none; position: fixed; inset: 0; z-index: 400; background: rgba(0,0,0,0.92); align-items: center; justify-content: center; padding: 20px; }
+  .lightbox.open { display: flex; }
+  .lb-inner { position: relative; max-width: 90vw; max-height: 90vh; }
+  .lb-inner img { max-width: 100%; max-height: 88vh; border-radius: 12px; object-fit: contain; display: block; }
+  .lb-close { position: absolute; top: -14px; right: -14px; background: var(--bg3); border: 0.5px solid var(--border2); border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--muted); font-size: 15px; }
+  .lb-close:hover { color: #fff; }
+  .lb-info { position: absolute; bottom: -40px; left: 0; right: 0; display: flex; align-items: center; justify-content: space-between; font-size: 13px; color: var(--muted); }
+
+  /* ---- SHARE MODAL ---- */
+  .modal-bg { display: none; position: fixed; inset: 0; z-index: 300; background: rgba(0,0,0,0.6); align-items: center; justify-content: center; padding: 20px; }
+  .modal-bg.open { display: flex; }
+  .modal { background: var(--bg3); border: 0.5px solid var(--border2); border-radius: 18px; padding: 24px; width: 360px; max-width: 100%; position: relative; }
+  .modal h3 { font-size: 15px; font-weight: 600; margin-bottom: 18px; display: flex; align-items: center; gap: 8px; }
+  .modal h3 i { color: var(--purple-light); }
+  .modal-close { position: absolute; top: 16px; right: 16px; background: rgba(255,255,255,0.06); border: none; border-radius: 6px; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--muted); font-size: 14px; }
+  .modal-close:hover { color: #fff; background: rgba(255,255,255,0.12); }
+
+  .sub-label { font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
+  .friends-grid { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; }
+  .friend-chip { display: flex; align-items: center; gap: 7px; background: rgba(255,255,255,0.05); border: 0.5px solid var(--border2); border-radius: 20px; padding: 5px 12px; font-size: 12px; cursor: pointer; transition: all 0.15s; color: var(--text); }
+  .friend-chip:hover { background: var(--purple-dim); }
+  .friend-chip.sel { background: var(--purple-dim); border-color: rgba(167,139,250,0.4); color: var(--purple-light); }
+  .fc-av { width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 8px; font-weight: 700; color: #fff; }
+
+  .copy-row { display: flex; gap: 8px; margin-bottom: 16px; }
+  .copy-row input { flex: 1; background: rgba(255,255,255,0.05); border: 0.5px solid var(--border2); border-radius: var(--radius-sm); padding: 9px 12px; font-size: 12px; color: var(--muted); font-family: inherit; outline: none; }
+
+  /* ---- TOAST ---- */
+  .toast { position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%) translateY(100px); background: var(--bg3); border: 0.5px solid rgba(167,139,250,0.35); color: var(--purple-light); font-size: 13px; padding: 10px 20px; border-radius: 10px; z-index: 500; transition: transform 0.25s cubic-bezier(0.34,1.56,0.64,1); display: flex; align-items: center; gap: 8px; white-space: nowrap; }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* ---- FOOTER ---- */
+  footer { border-top: 0.5px solid var(--border); padding: 20px 24px; text-align: center; font-size: 12px; color: var(--muted); }
+  footer a { color: var(--purple-light); text-decoration: none; }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="#" class="logo">Snap<span>Share</span></a>
+  <div class="nav-right">
+    <button class="btn btn-ghost" onclick="openShareModal(null)"><i class="ti ti-share"></i> Share album</button>
+    <button class="btn btn-primary" onclick="document.getElementById('fileInput').click()"><i class="ti ti-upload"></i> Upload</button>
+    <div class="avatar-circle" title="Your profile">Y</div>
+  </div>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <h1>Share your world,<br><em>one photo at a time</em></h1>
+  <p>Upload your favourite moments and share them instantly with friends. Everyone can add to the album.</p>
+  <div class="hero-actions">
+    <button class="btn btn-primary" style="font-size:14px;padding:10px 22px" onclick="document.getElementById('fileInput').click()"><i class="ti ti-cloud-upload"></i> Upload photos</button>
+    <button class="btn btn-ghost" style="font-size:14px;padding:10px 22px" onclick="openShareModal(null)"><i class="ti ti-users"></i> Invite friends</button>
+  </div>
+</div>
+
+<!-- UPLOAD -->
+<div class="section" style="padding-top:0">
+  <div class="upload-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
+    <div class="upload-icon"><i class="ti ti-photo-plus"></i></div>
+    <h3>Drop photos here to upload</h3>
+    <p>Supports JPG, PNG, GIF, WEBP &nbsp;·&nbsp; Multiple files at once</p>
+    <button class="btn btn-primary" onclick="event.stopPropagation();document.getElementById('fileInput').click()"><i class="ti ti-plus"></i> Choose files</button>
+    <div class="progress-wrap" id="progressWrap"><div class="progress-fill" id="progressFill"></div></div>
+  </div>
+  <input type="file" id="fileInput" multiple accept="image/*">
+</div>
+
+<!-- TABS + VIEW TOGGLE -->
+<div class="tabs-row">
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab(this,'all')">All photos</button>
+    <button class="tab" onclick="switchTab(this,'mine')">My uploads</button>
+    <button class="tab" onclick="switchTab(this,'friends')">Friends'</button>
+  </div>
+  <div class="view-toggle">
+    <button class="view-btn active" id="masonryBtn" onclick="setView('masonry')" title="Masonry"><i class="ti ti-layout-masonry"></i></button>
+    <button class="view-btn" id="gridBtn" onclick="setView('grid')" title="Grid"><i class="ti ti-layout-grid"></i></button>
+  </div>
+</div>
+
+<!-- GALLERY -->
+<div class="gallery-wrap">
+  <div class="gallery" id="gallery"></div>
+</div>
+
+<!-- LIGHTBOX -->
+<div class="lightbox" id="lightbox" onclick="closeLightbox(event)">
+  <div class="lb-inner">
+    <button class="lb-close" onclick="document.getElementById('lightbox').classList.remove('open')"><i class="ti ti-x"></i></button>
+    <img id="lbImg" src="" alt="">
+    <div class="lb-info">
+      <span id="lbOwner"></span>
+      <span>Click anywhere to close</span>
+    </div>
+  </div>
+</div>
+
+<!-- SHARE MODAL -->
+<div class="modal-bg" id="shareModal" onclick="closeModal(event)">
+  <div class="modal">
+    <button class="modal-close" onclick="document.getElementById('shareModal').classList.remove('open')"><i class="ti ti-x"></i></button>
+    <h3><i class="ti ti-share"></i> Share with friends</h3>
+    <div class="sub-label">Select friends</div>
+    <div class="friends-grid" id="friendsGrid"></div>
+    <div class="sub-label">Or copy link</div>
+    <div class="copy-row">
+      <input type="text" id="shareUrlInput" value="https://yourname.github.io/snapshare" readonly>
+      <button class="btn btn-primary" onclick="copyLink()"><i class="ti ti-copy"></i></button>
+    </div>
+    <button class="btn btn-primary" style="width:100%;justify-content:center;padding:10px" onclick="sendShare()"><i class="ti ti-send"></i> Send invite</button>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"><i class="ti ti-check"></i><span id="toastText"></span></div>
+
+<!-- FOOTER -->
+<footer>
+  Built with SnapShare &nbsp;·&nbsp; <a href="#" onclick="openShareModal(null)">Invite your friends</a>
+</footer>
+
+<script>
+const FRIENDS = [
+  { name: 'Aryan', initials: 'AR', color: '#7c3aed' },
+  { name: 'Priya', initials: 'PR', color: '#0d9488' },
+  { name: 'Mihail', initials: 'MI', color: '#b45309' },
+  { name: 'Nadia', initials: 'NA', color: '#be185d' },
+  { name: 'Reza', initials: 'RE', color: '#1d6aa5' },
+];
+
+const SEED = [
+  { id:1, src:'https://picsum.photos/seed/ss1/600/800', owner:'Priya', initials:'PR', color:'#0d9488', mine:false, likes:14, liked:false, isNew:false },
+  { id:2, src:'https://picsum.photos/seed/ss2/600/400', owner:'You', initials:'Y', color:'#7c3aed', mine:true, likes:5, liked:false, isNew:false },
+  { id:3, src:'https://picsum.photos/seed/ss3/600/700', owner:'Aryan', initials:'AR', color:'#7c3aed', mine:false, likes:9, liked:false, isNew:false },
+  { id:4, src:'https://picsum.photos/seed/ss4/600/420', owner:'You', initials:'Y', color:'#7c3aed', mine:true, likes:3, liked:false, isNew:false },
+  { id:5, src:'https://picsum.photos/seed/ss5/600/800', owner:'Nadia', initials:'NA', color:'#be185d', mine:false, likes:21, liked:false, isNew:false },
+  { id:6, src:'https://picsum.photos/seed/ss6/600/500', owner:'Mihail', initials:'MI', color:'#b45309', mine:false, likes:7, liked:false, isNew:false },
+  { id:7, src:'https://picsum.photos/seed/ss7/600/380', owner:'You', initials:'Y', color:'#7c3aed', mine:true, likes:2, liked:false, isNew:false },
+  { id:8, src:'https://picsum.photos/seed/ss8/600/600', owner:'Reza', initials:'RE', color:'#1d6aa5', mine:false, likes:11, liked:false, isNew:false },
+];
+
+let photos = [...SEED];
+let currentTab = 'all';
+let viewMode = 'masonry';
+let nextId = 200;
+
+function filtered() {
+  if (currentTab === 'mine') return photos.filter(p => p.mine);
+  if (currentTab === 'friends') return photos.filter(p => !p.mine);
+  return photos;
+}
+
+function render() {
+  const gallery = document.getElementById('gallery');
+  gallery.className = 'gallery' + (viewMode === 'grid' ? ' grid-view' : '');
+  const list = filtered();
+  if (!list.length) {
+    gallery.innerHTML = `<div class="empty-state" style="column-span:all;grid-column:1/-1"><i class="ti ti-photo-off"></i><p>No photos here yet — upload some!</p></div>`;
+    return;
+  }
+  gallery.innerHTML = list.map(p => `
+    <div class="photo-card" data-id="${p.id}">
+      ${p.isNew ? '<div class="badge-new">NEW</div>' : ''}
+      <img src="${p.src}" alt="photo by ${p.owner}" loading="lazy" onclick="openLightbox(${p.id})">
+      <div class="photo-overlay">
+        <div class="overlay-bottom">
+          <div class="photo-author">
+            <div class="mini-av" style="background:${p.color}">${p.initials}</div>
+            ${p.owner}
+          </div>
+          <div class="photo-btns">
+            <button class="icon-btn ${p.liked ? 'liked' : ''}" onclick="toggleLike(${p.id})" title="Like">
+              <i class="ti ti-heart${p.liked ? '-filled' : ''}"></i>
+            </button>
+            <button class="icon-btn" onclick="openShareModal(${p.id})" title="Share">
+              <i class="ti ti-share"></i>
+            </button>
+            <button class="icon-btn" onclick="downloadPhoto('${p.src}')" title="Download">
+              <i class="ti ti-download"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function switchTab(el, tab) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  currentTab = tab;
+  render();
+}
+
+function setView(v) {
+  viewMode = v;
+  document.getElementById('masonryBtn').classList.toggle('active', v === 'masonry');
+  document.getElementById('gridBtn').classList.toggle('active', v === 'grid');
+  render();
+}
+
+function toggleLike(id) {
+  const p = photos.find(x => x.id === id);
+  if (!p) return;
+  p.liked = !p.liked;
+  p.likes += p.liked ? 1 : -1;
+  render();
+  if (p.liked) toast('Liked! ❤️');
+}
+
+function openLightbox(id) {
+  const p = photos.find(x => x.id === id);
+  if (!p) return;
+  document.getElementById('lbImg').src = p.src;
+  document.getElementById('lbOwner').textContent = 'by ' + p.owner;
+  document.getElementById('lightbox').classList.add('open');
+}
+
+function closeLightbox(e) {
+  if (e.target === document.getElementById('lightbox')) {
+    document.getElementById('lightbox').classList.remove('open');
+  }
+}
+
+function downloadPhoto(src) {
+  const a = document.createElement('a');
+  a.href = src;
+  a.download = 'snapshare-photo.jpg';
+  a.target = '_blank';
+  a.click();
+  toast('Downloading photo…');
+}
+
+function openShareModal(photoId) {
+  renderFriends();
+  document.getElementById('shareModal').classList.add('open');
+}
+
+function closeModal(e) {
+  if (e.target === document.getElementById('shareModal')) {
+    document.getElementById('shareModal').classList.remove('open');
+  }
+}
+
+function renderFriends() {
+  document.getElementById('friendsGrid').innerHTML = FRIENDS.map((f, i) => `
+    <div class="friend-chip" onclick="this.classList.toggle('sel')" data-i="${i}">
+      <div class="fc-av" style="background:${f.color}">${f.initials}</div>
+      ${f.name}
+    </div>
+  `).join('');
+}
+
+function copyLink() {
+  const val = document.getElementById('shareUrlInput').value;
+  navigator.clipboard.writeText(val).catch(() => {});
+  toast('Link copied to clipboard!');
+}
+
+function sendShare() {
+  const sel = document.querySelectorAll('.friend-chip.sel');
+  if (!sel.length) { toast('Pick at least one friend first'); return; }
+  const names = [...sel].map(el => FRIENDS[parseInt(el.dataset.i)].name).join(', ');
+  document.getElementById('shareModal').classList.remove('open');
+  toast('Invite sent to ' + names + '!');
+}
+
+function toast(msg) {
+  const el = document.getElementById('toast');
+  document.getElementById('toastText').textContent = msg;
+  el.classList.add('show');
+  clearTimeout(el._t);
+  el._t = setTimeout(() => el.classList.remove('show'), 2800);
+}
+
+// ---- FILE UPLOAD ----
+const fileInput = document.getElementById('fileInput');
+const dropZone = document.getElementById('dropZone');
+const progressWrap = document.getElementById('progressWrap');
+const progressFill = document.getElementById('progressFill');
+
+fileInput.addEventListener('change', e => handleFiles(e.target.files));
+
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragover'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+dropZone.addEventListener('drop', e => { e.preventDefault(); dropZone.classList.remove('dragover'); handleFiles(e.dataTransfer.files); });
+
+function handleFiles(files) {
+  const imgs = [...files].filter(f => f.type.startsWith('image/'));
+  if (!imgs.length) return;
+  progressWrap.style.display = 'block';
+  progressFill.style.width = '0%';
+  let done = 0;
+  imgs.forEach(file => {
+    const reader = new FileReader();
+    reader.onload = ev => {
+      photos.unshift({ id: nextId++, src: ev.target.result, owner: 'You', initials: 'Y', color: '#7c3aed', mine: true, likes: 0, liked: false, isNew: true });
+      done++;
+      progressFill.style.width = Math.round((done / imgs.length) * 100) + '%';
+      if (done === imgs.length) {
+        setTimeout(() => {
+          progressWrap.style.display = 'none';
+          progressFill.style.width = '0%';
+          currentTab = 'all';
+          document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', i === 0));
+          render();
+          toast(done + ' photo' + (done > 1 ? 's' : '') + ' uploaded!');
+          fileInput.value = '';
+        }, 400);
+      }
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+render();
+</script>
+</body>
+</html>
